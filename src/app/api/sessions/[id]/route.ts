@@ -12,7 +12,7 @@ type SessionRouteContext = {
 type PlayerJoinRow = {
   players: Pick<
     Database["public"]["Tables"]["players"]["Row"],
-    "display_name" | "high_score" | "id" | "lifetime_score" | "photo_url"
+    "display_name" | "id" | "photo_url"
   > | null;
   score: number;
 };
@@ -37,9 +37,7 @@ export async function GET(_request: Request, context: SessionRouteContext) {
 
   const { data: sessionPlayers, error: playersError } = await supabase
     .from("session_players")
-    .select(
-      "score,players(id,display_name,photo_url,high_score,lifetime_score)",
-    )
+    .select("score,players(id,display_name,photo_url)")
     .eq("session_id", id)
     .order("created_at", { ascending: true });
 
@@ -56,9 +54,7 @@ export async function GET(_request: Request, context: SessionRouteContext) {
       players: rows
         .filter((row) => row.players)
         .map((row) => ({
-          highScore: row.players!.high_score,
           id: row.players!.id,
-          lifetimeScore: row.players!.lifetime_score,
           name: row.players!.display_name,
           photo: row.players!.photo_url,
           score: row.score,

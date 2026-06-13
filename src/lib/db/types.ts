@@ -16,9 +16,7 @@ export type Database = {
           auth_user_id: string;
           created_at: string;
           display_name: string;
-          high_score: number;
           id: string;
-          lifetime_score: number;
           photo_url: string | null;
           updated_at: string;
         };
@@ -26,9 +24,7 @@ export type Database = {
           auth_user_id: string;
           created_at?: string;
           display_name: string;
-          high_score?: number;
           id?: string;
-          lifetime_score?: number;
           photo_url?: string | null;
           updated_at?: string;
         };
@@ -36,9 +32,7 @@ export type Database = {
           auth_user_id?: string;
           created_at?: string;
           display_name?: string;
-          high_score?: number;
           id?: string;
-          lifetime_score?: number;
           photo_url?: string | null;
           updated_at?: string;
         };
@@ -106,7 +100,29 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_player_score_summary: {
+        Args: {
+          p_player_id: string;
+        };
+        Returns: {
+          high_score: number;
+          lifetime_score: number;
+        }[];
+      };
+      update_session_player_score: {
+        Args: {
+          p_delta: number;
+          p_player_id: string;
+          p_session_id: string;
+        };
+        Returns: {
+          error_code: string | null;
+          score: number;
+          success: boolean;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

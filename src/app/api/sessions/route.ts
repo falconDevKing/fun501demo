@@ -5,14 +5,41 @@ import type { SessionStatus } from "@/lib/db/types";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = getSupabaseAdmin();
+  const playerId = new URL(request.url).searchParams.get("playerId");
+  let scopedSessionIds: string[] | null = null;
 
-  const { data: sessions, error } = await supabase
+  if (playerId) {
+    const { data: playerSessions, error: playerSessionsError } = await supabase
+      .from("session_players")
+      .select("session_id")
+      .eq("player_id", playerId);
+
+    if (playerSessionsError) {
+      return errorResponse("Failed to fetch player sessions.", 500);
+    }
+
+    scopedSessionIds = [
+      ...new Set(playerSessions.map((session) => session.session_id)),
+    ];
+
+    if (scopedSessionIds.length === 0) {
+      return Response.json({ sessions: [] });
+    }
+  }
+
+  let sessionsQuery = supabase
     .from("sessions")
     .select("id,title,status,started_at,created_at")
     .order("started_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
+
+  if (scopedSessionIds) {
+    sessionsQuery = sessionsQuery.in("id", scopedSessionIds);
+  }
+
+  const { data: sessions, error } = await sessionsQuery;
 
   if (error) {
     return errorResponse("Failed to fetch sessions.", 500);

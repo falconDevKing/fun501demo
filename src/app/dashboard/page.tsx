@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardPage } from "@/components/auth/dashboard-page";
+import { DashboardPage } from "@/components/dashboard/dashboard-page";
 
 export default function Page() {
   return <DashboardPage />;
