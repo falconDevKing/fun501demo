@@ -17,6 +17,7 @@ export type Database = {
           created_at: string;
           display_name: string;
           id: string;
+          photo_public_id: string | null;
           photo_url: string | null;
           updated_at: string;
         };
@@ -25,6 +26,7 @@ export type Database = {
           created_at?: string;
           display_name: string;
           id?: string;
+          photo_public_id?: string | null;
           photo_url?: string | null;
           updated_at?: string;
         };
@@ -33,6 +35,7 @@ export type Database = {
           created_at?: string;
           display_name?: string;
           id?: string;
+          photo_public_id?: string | null;
           photo_url?: string | null;
           updated_at?: string;
         };
@@ -47,6 +50,8 @@ export type Database = {
           status: SessionStatus;
           title: string;
           updated_at: string;
+          video_public_id: string | null;
+          video_source: "provided" | "uploaded";
           video_url: string | null;
         };
         Insert: {
@@ -57,6 +62,8 @@ export type Database = {
           status?: SessionStatus;
           title: string;
           updated_at?: string;
+          video_public_id?: string | null;
+          video_source?: "provided" | "uploaded";
           video_url?: string | null;
         };
         Update: {
@@ -67,6 +74,8 @@ export type Database = {
           status?: SessionStatus;
           title?: string;
           updated_at?: string;
+          video_public_id?: string | null;
+          video_source?: "provided" | "uploaded";
           video_url?: string | null;
         };
         Relationships: [];

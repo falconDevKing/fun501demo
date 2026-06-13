@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { LoaderCircle, Plus, X } from "lucide-react";
+import { LoaderCircle, Plus, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -11,32 +11,46 @@ import type { CurrentPlayer, SelectablePlayer } from "./types";
 export type CreateSessionValues = {
   playerIds: string[];
   title: string;
+  videoPublicId: string | null;
+  videoSource: "provided" | "uploaded";
   videoUrl: string;
+};
+
+type UploadedVideo = {
+  publicId: string;
+  secureUrl: string;
 };
 
 export function StartSessionModal({
   currentPlayer,
   error,
   isLoadingPlayers,
+  isUploadingVideo,
   isOpen,
   isSubmitting,
   onClose,
   onSubmit,
+  onUploadVideo,
   players,
 }: {
   currentPlayer: CurrentPlayer;
   error: string;
   isLoadingPlayers: boolean;
+  isUploadingVideo: boolean;
   isOpen: boolean;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (values: CreateSessionValues) => void;
+  onUploadVideo: (file: File) => Promise<UploadedVideo>;
   players: SelectablePlayer[];
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set([currentPlayer.id]),
   );
   const [title, setTitle] = useState("");
+  const [uploadedVideo, setUploadedVideo] = useState<UploadedVideo | null>(
+    null,
+  );
   const [videoUrl, setVideoUrl] = useState("");
 
   const sortedPlayers = useMemo(() => {
@@ -83,8 +97,24 @@ export function StartSessionModal({
     onSubmit({
       playerIds: [...selectedIds],
       title,
+      videoPublicId: uploadedVideo?.publicId ?? null,
+      videoSource: uploadedVideo ? "uploaded" : "provided",
       videoUrl,
     });
+  }
+
+  async function handleVideoUpload(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const upload = await onUploadVideo(file);
+      setUploadedVideo(upload);
+      setVideoUrl(upload.secureUrl);
+    } catch {
+      // The controller owns the visible error state.
+    }
   }
 
   return (
@@ -121,15 +151,37 @@ export function StartSessionModal({
             />
           </label>
 
-          <label className="grid gap-1.5 text-sm font-semibold">
+          <div className="grid gap-1.5 text-sm font-semibold">
             Video URL
-            <input
-              value={videoUrl}
-              onChange={(event) => setVideoUrl(event.target.value)}
-              className="focus:border-brand-alt focus:ring-brand-alt/20 h-10 rounded-lg border border-slate-300 bg-slate-50 px-3 font-normal transition outline-none focus:bg-white focus:ring-3"
-              placeholder="https://..."
-            />
-          </label>
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <input
+                value={videoUrl}
+                onChange={(event) => {
+                  setUploadedVideo(null);
+                  setVideoUrl(event.target.value);
+                }}
+                className="focus:border-brand-alt focus:ring-brand-alt/20 h-10 rounded-lg border border-slate-300 bg-slate-50 px-3 font-normal transition outline-none focus:bg-white focus:ring-3"
+                placeholder="https://..."
+              />
+              <label className="border-brand-main text-brand-main hover:bg-brand-main/5 inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold">
+                {isUploadingVideo ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Upload className="size-4" />
+                )}
+                Upload
+                <input
+                  type="file"
+                  accept="video/*"
+                  disabled={isUploadingVideo}
+                  onChange={(event) =>
+                    void handleVideoUpload(event.target.files?.[0])
+                  }
+                  className="sr-only"
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5">

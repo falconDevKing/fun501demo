@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 export function AuthShell({
   children,
-  title = "501 Hub - Login",
+  title = "501 Hub Demo - Login",
 }: {
   children: ReactNode;
   title?: string;

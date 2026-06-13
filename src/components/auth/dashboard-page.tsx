@@ -54,7 +54,7 @@ export function DashboardPage() {
   }
 
   return (
-    <AuthShell title="501 Hub - Dashboard">
+    <AuthShell title="501 Hub Demo - Dashboard">
       <div className="flex flex-col gap-4 text-center">
         <p className="text-sm text-slate-600">
           {isLoading ? "Checking session..." : "You are signed in."}

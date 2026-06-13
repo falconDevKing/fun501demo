@@ -118,7 +118,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthShell title="501 Hub - Reset Password">
+    <AuthShell title="501 Hub Demo - Reset Password">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <p className="text-center text-sm text-slate-500">{status}</p>
 

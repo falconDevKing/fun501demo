@@ -7,7 +7,7 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data: players, error } = await supabase
     .from("players")
-    .select("id,display_name,photo_url")
+    .select("id,display_name,photo_url,photo_public_id")
     .order("display_name", { ascending: true });
 
   if (error) {
@@ -18,6 +18,7 @@ export async function GET() {
     players: players.map((player) => ({
       displayName: player.display_name,
       id: player.id,
+      photoPublicId: player.photo_public_id,
       photoUrl: player.photo_url,
     })),
   });

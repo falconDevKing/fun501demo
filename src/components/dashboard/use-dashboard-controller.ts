@@ -15,6 +15,7 @@ import {
   setPlayerScore,
 } from "./score-store";
 import type { CreateSessionValues } from "./session-flow";
+import { useDashboardMedia } from "./use-dashboard-media";
 import { useSessionRealtime } from "./use-session-realtime";
 import type {
   CurrentPlayer,
@@ -45,6 +46,7 @@ export function useDashboardController() {
   );
   const [error, setError] = useState("");
   const [flowError, setFlowError] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
   const [isEndingSession, setIsEndingSession] = useState(false);
@@ -52,6 +54,12 @@ export function useDashboardController() {
   const [isLoadingPlayers, setIsLoadingPlayers] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [isSubmittingSession, setIsSubmittingSession] = useState(false);
+  const media = useDashboardMedia({
+    accessToken,
+    currentPlayer,
+    setCurrentPlayer,
+    setFlowError,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -83,6 +91,7 @@ export function useDashboardController() {
           return;
         }
 
+        setAccessToken(data.session.access_token);
         setCurrentPlayer(me.player);
         setMyMatches(matchLists.myMatches);
         setLatestMatches(matchLists.latestMatches);
@@ -246,6 +255,8 @@ export function useDashboardController() {
           player_ids: playerIds,
           status: "active",
           title,
+          video_public_id: values.videoPublicId,
+          video_source: values.videoSource,
           video_url: videoUrl || null,
         },
         method: "POST",
@@ -314,11 +325,15 @@ export function useDashboardController() {
     isCreateOpen,
     isEndConfirmOpen,
     isEndingSession,
+    isProfileOpen: media.isProfileOpen,
     isLoading,
     isLoadingPlayers,
+    isSavingProfile: media.isSavingProfile,
     isSessionLoading,
     isSubmittingSession,
+    isUploadingVideo: media.isUploadingVideo,
     players,
+    profileError: media.profileError,
     realtimeStatus,
     selectedSession,
     selectedSessionId,
@@ -327,6 +342,7 @@ export function useDashboardController() {
       closeSessionDetails,
       confirmEndSession,
       createSession,
+      saveProfile: media.saveProfile,
       selectSession: (id: string) => {
         setError("");
         setSelectedSessionId(id);
@@ -334,7 +350,9 @@ export function useDashboardController() {
       setActiveTab,
       setIsCreateOpen,
       setIsEndConfirmOpen,
+      setIsProfileOpen: media.setIsProfileOpen,
       signOut,
+      uploadSessionVideo: media.uploadSessionVideo,
     },
   };
 }

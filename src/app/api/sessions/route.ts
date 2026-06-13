@@ -87,6 +87,8 @@ export async function POST(request: Request) {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const status = body.status ?? "active";
   const videoUrl = cleanOptionalString(body.video_url);
+  const videoPublicId = cleanOptionalString(body.video_public_id);
+  const videoSource = body.video_source ?? (videoUrl ? "provided" : null);
 
   if (!title) {
     return errorResponse("Title is required.");
@@ -98,6 +100,18 @@ export async function POST(request: Request) {
 
   if (videoUrl === undefined) {
     return errorResponse("Video URL must be a string or null.");
+  }
+
+  if (videoPublicId === undefined) {
+    return errorResponse("Video public ID must be a string or null.");
+  }
+
+  if (!isVideoSource(videoSource)) {
+    return errorResponse("Video source must be uploaded, provided, or null.");
+  }
+
+  if (videoSource === "uploaded" && (!videoUrl || !videoPublicId)) {
+    return errorResponse("Uploaded videos require a URL and public ID.");
   }
 
   if (!isStringArray(body.player_ids)) {
@@ -129,9 +143,13 @@ export async function POST(request: Request) {
       ended_at: status === "completed" ? now : null,
       status: status as SessionStatus,
       title,
+      video_public_id: videoPublicId,
+      video_source: videoSource ?? "provided",
       video_url: videoUrl,
     })
-    .select("id,title,status,video_url,started_at,ended_at")
+    .select(
+      "id,title,status,video_url,video_public_id,video_source,started_at,ended_at",
+    )
     .single();
 
   if (sessionError) {
@@ -163,9 +181,17 @@ export async function POST(request: Request) {
         startedAt: session.started_at,
         status: session.status,
         title: session.title,
+        videoPublicId: session.video_public_id,
+        videoSource: session.video_source,
         videoUrl: session.video_url,
       },
     },
     { status: 201 },
   );
+}
+
+function isVideoSource(
+  value: unknown,
+): value is "provided" | "uploaded" | null {
+  return value === "provided" || value === "uploaded" || value === null;
 }

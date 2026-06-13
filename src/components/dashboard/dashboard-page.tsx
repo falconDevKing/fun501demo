@@ -8,7 +8,12 @@ import {
   TopNav,
   VideoPanel,
 } from "./dashboard-widgets";
+import {
+  SessionLoadingState,
+  SessionUnavailableState,
+} from "./dashboard-states";
 import { PlayerCards } from "./player-cards";
+import { ProfileDrawer } from "./profile-drawer";
 import { EndSessionConfirm, StartSessionModal } from "./session-flow";
 import { useDashboardController } from "./use-dashboard-controller";
 
@@ -18,11 +23,15 @@ export function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
-      <TopNav player={dashboard.currentPlayer} onSignOut={actions.signOut} />
+      <TopNav
+        player={dashboard.currentPlayer}
+        onOpenProfile={() => actions.setIsProfileOpen(true)}
+        onSignOut={actions.signOut}
+      />
 
       <div className="grid min-h-[calc(100vh-72px)] grid-cols-1 lg:grid-cols-[320px_1fr]">
         <aside className="border-b border-slate-200 bg-white lg:border-r lg:border-b-0">
-          <div className="sticky top-18 flex max-h-[calc(100vh-72px)] flex-col gap-4 p-4">
+          <div className="flex flex-col gap-4 p-4 lg:sticky lg:top-18 lg:max-h-[calc(100vh-72px)]">
             <div className="grid h-10 grid-cols-2 rounded-lg bg-slate-100 p-1">
               <MatchTabButton
                 isActive={dashboard.activeTab === "my"}
@@ -48,7 +57,10 @@ export function DashboardPage() {
 
         <section className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
           {dashboard.error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            >
               {dashboard.error}
             </p>
           ) : null}
@@ -60,11 +72,11 @@ export function DashboardPage() {
           ) : null}
 
           {dashboard.selectedSessionId && !dashboard.selectedSession ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500">
-              {dashboard.isSessionLoading
-                ? "Loading session..."
-                : "Session unavailable."}
-            </div>
+            dashboard.isSessionLoading ? (
+              <SessionLoadingState />
+            ) : (
+              <SessionUnavailableState onClear={actions.closeSessionDetails} />
+            )
           ) : null}
 
           {dashboard.selectedSession ? (
@@ -83,6 +95,7 @@ export function DashboardPage() {
               />
               <VideoPanel
                 isLoading={dashboard.isSessionLoading}
+                videoSource={dashboard.selectedSession.videoSource}
                 videoUrl={dashboard.selectedSession.videoUrl}
               />
             </>
@@ -96,11 +109,25 @@ export function DashboardPage() {
           currentPlayer={dashboard.currentPlayer}
           error={dashboard.flowError}
           isLoadingPlayers={dashboard.isLoadingPlayers}
+          isUploadingVideo={dashboard.isUploadingVideo}
           isOpen={dashboard.isCreateOpen}
           isSubmitting={dashboard.isSubmittingSession}
           players={dashboard.players}
           onClose={() => actions.setIsCreateOpen(false)}
           onSubmit={actions.createSession}
+          onUploadVideo={actions.uploadSessionVideo}
+        />
+      ) : null}
+
+      {dashboard.currentPlayer && dashboard.isProfileOpen ? (
+        <ProfileDrawer
+          key={dashboard.currentPlayer.id}
+          error={dashboard.profileError}
+          isOpen={dashboard.isProfileOpen}
+          isSaving={dashboard.isSavingProfile}
+          player={dashboard.currentPlayer}
+          onClose={() => actions.setIsProfileOpen(false)}
+          onSubmit={actions.saveProfile}
         />
       ) : null}
 

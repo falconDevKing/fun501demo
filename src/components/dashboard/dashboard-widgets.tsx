@@ -15,6 +15,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  getOptimizedImageUrl,
+  getOptimizedVideoUrl,
+} from "@/lib/media/cloudinary-url";
 
 import type {
   CurrentPlayer,
@@ -22,19 +26,22 @@ import type {
   RealtimeStatus,
   SessionDetail,
 } from "./types";
+import { EmptyListState, MatchListSkeleton } from "./dashboard-states";
 import { RealtimeStatusBadge } from "./realtime-status";
 
 export type MatchTab = "my" | "latest";
 
 export function TopNav({
+  onOpenProfile,
   onSignOut,
   player,
 }: {
+  onOpenProfile: () => void;
   onSignOut: () => void;
   player: CurrentPlayer | null;
 }) {
   return (
-    <header className="sticky top-0 z-20 flex h-18 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex min-h-18 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
       <div className="flex items-center gap-3">
         <Image
           src="/fun501Logo.png"
@@ -44,14 +51,18 @@ export function TopNav({
           className="size-10 rounded-full object-contain"
           priority
         />
-        <div>
-          <p className="text-brand-main text-base font-bold">501 Hub</p>
-          <p className="text-xs text-slate-500">Session dashboard</p>
+        <div className="min-w-0">
+          <p className="text-brand-main text-base font-bold">501 Hub Demo</p>
+          <p className="hidden text-xs text-slate-500 sm:block">
+            Session dashboard
+          </p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <Avatar photo={player?.photoUrl ?? null} name={player?.displayName} />
+        <button type="button" onClick={onOpenProfile}>
+          <Avatar photo={player?.photoUrl ?? null} name={player?.displayName} />
+        </button>
         <div className="hidden min-w-0 sm:block">
           <p className="truncate text-sm font-semibold">
             {player?.displayName ?? "Loading player"}
@@ -116,21 +127,23 @@ export function MatchList({
   tab: MatchTab;
 }) {
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Loading matches...</p>;
+    return <MatchListSkeleton />;
   }
 
   if (matches.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
-        {tab === "my"
-          ? "You are not attached to any matches yet."
-          : "No matches have been created yet."}
-      </div>
+      <EmptyListState
+        label={
+          tab === "my"
+            ? "You are not attached to any matches yet."
+            : "No latest matches have been created yet."
+        }
+      />
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 overflow-y-auto">
+    <div className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-none">
       {matches.map((match) => (
         <button
           key={match.id}
@@ -243,11 +256,15 @@ export function SessionHeader({
 
 export function VideoPanel({
   isLoading,
+  videoSource,
   videoUrl,
 }: {
   isLoading: boolean;
+  videoSource: SessionDetail["videoSource"];
   videoUrl: string | null;
 }) {
+  const resolvedVideoUrl = getOptimizedVideoUrl(videoUrl, videoSource);
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center gap-2">
@@ -255,15 +272,16 @@ export function VideoPanel({
         <h3 className="font-semibold">Session Video</h3>
       </div>
 
-      {videoUrl && !isLoading ? (
+      {resolvedVideoUrl && !isLoading ? (
         <video
           controls
-          src={videoUrl}
+          src={resolvedVideoUrl}
           className="aspect-video w-full rounded-lg bg-black"
         />
       ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500">
-          {isLoading ? "Loading video..." : "No video has been added."}
+        <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 text-center text-sm text-slate-500">
+          <Play className="mb-2 size-7 text-slate-300" />
+          {isLoading ? "Loading video..." : "No video available."}
         </div>
       )}
     </div>
@@ -277,11 +295,13 @@ export function Avatar({
   name?: string;
   photo: string | null;
 }) {
-  if (photo) {
+  const optimizedPhoto = getOptimizedImageUrl(photo);
+
+  if (optimizedPhoto) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={photo}
+        src={optimizedPhoto}
         alt={name ? `${name} avatar` : "Player avatar"}
         className="size-10 rounded-full border border-slate-200 object-cover"
       />
@@ -289,10 +309,19 @@ export function Avatar({
   }
 
   return (
-    <span className="text-brand-main flex size-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100">
-      <User className="size-5" />
+    <span className="text-brand-main flex size-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-sm font-bold uppercase">
+      {name ? getInitials(name) : <User className="size-5" />}
     </span>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
 }
 
 function StatusPill({ status }: { status: MatchSummary["status"] }) {

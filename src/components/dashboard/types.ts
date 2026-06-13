@@ -11,12 +11,14 @@ export type CurrentPlayer = {
   highScore: number;
   id: string;
   lifetimeScore: number;
+  photoPublicId: string | null;
   photoUrl: string | null;
 };
 
 export type SelectablePlayer = {
   displayName: string;
   id: string;
+  photoPublicId: string | null;
   photoUrl: string | null;
 };
 
@@ -31,6 +33,7 @@ export type SessionPlayer = {
   id: string;
   name: string;
   photo: string | null;
+  photoPublicId: string | null;
   score: number;
 };
 
@@ -41,5 +44,7 @@ export type SessionDetail = {
   startedAt: string;
   status: "active" | "completed";
   title: string;
+  videoPublicId: string | null;
+  videoSource: "provided" | "uploaded";
   videoUrl: string | null;
 };

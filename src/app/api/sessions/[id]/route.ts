@@ -12,7 +12,7 @@ type SessionRouteContext = {
 type PlayerJoinRow = {
   players: Pick<
     Database["public"]["Tables"]["players"]["Row"],
-    "display_name" | "id" | "photo_url"
+    "display_name" | "id" | "photo_public_id" | "photo_url"
   > | null;
   score: number;
 };
@@ -23,7 +23,9 @@ export async function GET(_request: Request, context: SessionRouteContext) {
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
-    .select("id,title,status,video_url,started_at,ended_at")
+    .select(
+      "id,title,status,video_url,video_public_id,video_source,started_at,ended_at",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -37,7 +39,7 @@ export async function GET(_request: Request, context: SessionRouteContext) {
 
   const { data: sessionPlayers, error: playersError } = await supabase
     .from("session_players")
-    .select("score,players(id,display_name,photo_url)")
+    .select("score,players(id,display_name,photo_url,photo_public_id)")
     .eq("session_id", id)
     .order("created_at", { ascending: true });
 
@@ -57,11 +59,14 @@ export async function GET(_request: Request, context: SessionRouteContext) {
           id: row.players!.id,
           name: row.players!.display_name,
           photo: row.players!.photo_url,
+          photoPublicId: row.players!.photo_public_id,
           score: row.score,
         })),
       startedAt: session.started_at,
       status: session.status,
       title: session.title,
+      videoPublicId: session.video_public_id,
+      videoSource: session.video_source,
       videoUrl: session.video_url,
     },
   });
@@ -95,6 +100,32 @@ export async function PATCH(request: Request, context: SessionRouteContext) {
     }
 
     update.video_url = videoUrl;
+  }
+
+  if ("video_public_id" in body) {
+    const videoPublicId = cleanOptionalString(body.video_public_id);
+
+    if (videoPublicId === undefined) {
+      return errorResponse("Video public ID must be a string or null.");
+    }
+
+    update.video_public_id = videoPublicId;
+  }
+
+  if ("video_source" in body) {
+    if (!isVideoSource(body.video_source)) {
+      return errorResponse("Video source must be uploaded or provided.");
+    }
+
+    update.video_source = body.video_source;
+  }
+
+  if (
+    update.video_source === "uploaded" &&
+    "video_url" in body &&
+    !update.video_url
+  ) {
+    return errorResponse("Uploaded videos require a URL.");
   }
 
   if ("status" in body) {
@@ -135,7 +166,9 @@ export async function PATCH(request: Request, context: SessionRouteContext) {
     .from("sessions")
     .update(update)
     .eq("id", id)
-    .select("id,title,status,video_url,started_at,ended_at")
+    .select(
+      "id,title,status,video_url,video_public_id,video_source,started_at,ended_at",
+    )
     .maybeSingle();
 
   if (error) {
@@ -153,7 +186,13 @@ export async function PATCH(request: Request, context: SessionRouteContext) {
       startedAt: session.started_at,
       status: session.status,
       title: session.title,
+      videoPublicId: session.video_public_id,
+      videoSource: session.video_source,
       videoUrl: session.video_url,
     },
   });
+}
+
+function isVideoSource(value: unknown): value is "provided" | "uploaded" {
+  return value === "provided" || value === "uploaded";
 }

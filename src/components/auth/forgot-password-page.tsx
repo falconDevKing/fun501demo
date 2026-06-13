@@ -47,7 +47,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell title="501 Hub - Forgot Password">
+    <AuthShell title="501 Hub Demo - Forgot Password">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <FormField
           error={error}
