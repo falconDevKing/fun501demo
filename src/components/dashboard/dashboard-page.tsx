@@ -1,9 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   EmptySessionState,
-  MatchList,
-  MatchTabButton,
   SessionHeader,
   TopNav,
   VideoPanel,
@@ -12,6 +12,11 @@ import {
   SessionLoadingState,
   SessionUnavailableState,
 } from "./dashboard-states";
+import {
+  MatchHistoryPanel,
+  MobileMatchHistoryDrawer,
+  MobileMatchHistoryToolbar,
+} from "./match-history";
 import { PlayerCards } from "./player-cards";
 import { ProfileDrawer } from "./profile-drawer";
 import { EndSessionConfirm, StartSessionModal } from "./session-flow";
@@ -20,6 +25,7 @@ import { useDashboardController } from "./use-dashboard-controller";
 export function DashboardPage() {
   const dashboard = useDashboardController();
   const { actions } = dashboard;
+  const [isMatchHistoryOpen, setIsMatchHistoryOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
@@ -30,32 +36,26 @@ export function DashboardPage() {
       />
 
       <div className="grid min-h-[calc(100vh-72px)] grid-cols-1 lg:grid-cols-[320px_1fr]">
-        <aside className="border-b border-slate-200 bg-white lg:border-r lg:border-b-0">
+        <aside className="hidden bg-white lg:block lg:border-r lg:border-slate-200">
           <div className="flex flex-col gap-4 p-4 lg:sticky lg:top-18 lg:max-h-[calc(100vh-72px)]">
-            <div className="grid h-10 grid-cols-2 rounded-lg bg-slate-100 p-1">
-              <MatchTabButton
-                isActive={dashboard.activeTab === "my"}
-                label="My Matches"
-                onClick={() => actions.setActiveTab("my")}
-              />
-              <MatchTabButton
-                isActive={dashboard.activeTab === "latest"}
-                label="Latest Matches"
-                onClick={() => actions.setActiveTab("latest")}
-              />
-            </div>
-
-            <MatchList
+            <MatchHistoryPanel
               activeId={dashboard.selectedSessionId}
+              activeTab={dashboard.activeTab}
               isLoading={dashboard.isLoading}
               matches={dashboard.displayedMatches}
-              tab={dashboard.activeTab}
               onSelect={actions.selectSession}
+              onTabChange={actions.setActiveTab}
             />
           </div>
         </aside>
 
         <section className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
+          <MobileMatchHistoryToolbar
+            activeTab={dashboard.activeTab}
+            count={dashboard.displayedMatches.length}
+            onOpen={() => setIsMatchHistoryOpen(true)}
+          />
+
           {dashboard.error ? (
             <p
               role="alert"
@@ -136,6 +136,17 @@ export function DashboardPage() {
         isSubmitting={dashboard.isEndingSession}
         onCancel={() => actions.setIsEndConfirmOpen(false)}
         onConfirm={actions.confirmEndSession}
+      />
+
+      <MobileMatchHistoryDrawer
+        activeId={dashboard.selectedSessionId}
+        activeTab={dashboard.activeTab}
+        isLoading={dashboard.isLoading}
+        isOpen={isMatchHistoryOpen}
+        matches={dashboard.displayedMatches}
+        onClose={() => setIsMatchHistoryOpen(false)}
+        onSelect={actions.selectSession}
+        onTabChange={actions.setActiveTab}
       />
     </main>
   );

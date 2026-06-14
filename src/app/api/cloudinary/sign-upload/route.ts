@@ -16,6 +16,13 @@ const VALID_RESOURCE_TYPES = new Set<CloudinaryResourceType>([
   "video",
 ]);
 
+/**
+ * POST /api/cloudinary/sign-upload
+ * - Verifies the bearer token with Supabase Auth.
+ * - Validates the requested Cloudinary folder and resource type.
+ * - Signs upload parameters with the server-only Cloudinary secret.
+ * - Returns the signed direct-upload payload for the browser.
+ */
 export async function POST(request: Request) {
   const token = readBearerToken(request);
 

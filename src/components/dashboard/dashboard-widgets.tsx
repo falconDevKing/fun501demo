@@ -115,35 +115,48 @@ export function MatchTabButton({
 
 export function MatchList({
   activeId,
+  fillHeight = false,
   isLoading,
   matches,
   onSelect,
   tab,
 }: {
   activeId: string | null;
+  fillHeight?: boolean;
   isLoading: boolean;
   matches: MatchSummary[];
   onSelect: (id: string) => void;
   tab: MatchTab;
 }) {
   if (isLoading) {
-    return <MatchListSkeleton />;
+    return (
+      <div className={cn(fillHeight && "min-h-0 flex-1")}>
+        <MatchListSkeleton />
+      </div>
+    );
   }
 
   if (matches.length === 0) {
     return (
-      <EmptyListState
-        label={
-          tab === "my"
-            ? "You are not attached to any matches yet."
-            : "No latest matches have been created yet."
-        }
-      />
+      <div className={cn(fillHeight && "min-h-0 flex-1")}>
+        <EmptyListState
+          label={
+            tab === "my"
+              ? "You are not attached to any matches yet."
+              : "No latest matches have been created yet."
+          }
+        />
+      </div>
     );
   }
 
   return (
-    <div className="flex max-h-80 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-none">
+    <div
+      className={cn(
+        "flex flex-col gap-2 overflow-y-auto pr-1",
+        fillHeight ? "min-h-0 flex-1" : "max-h-80 lg:max-h-none",
+      )}
+    >
       {matches.map((match) => (
         <button
           key={match.id}

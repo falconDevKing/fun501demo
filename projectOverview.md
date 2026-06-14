@@ -1,33 +1,12 @@
 # 501 Hub Demo
 
-501 Hub Demo is a full-stack Next.js demo for running and reviewing game
-sessions. It brings together Supabase Auth, Supabase Postgres, Supabase
-Realtime, and Cloudinary media delivery to support player profiles, match
-history, live score updates, and session video playback.
+501 Hub Demo is a demo Next.js application for managing game sessions, player
+profiles, score updates, match history, and Cloudinary-hosted media. It uses
+Supabase Auth for email/password access, Supabase Postgres for session data,
+Supabase Realtime for score updates, and signed Cloudinary uploads for profile
+images and session videos.
 
-The app is intentionally scoped like a take-home assignment: it demonstrates the
-core product workflow clearly without pretending to be a finished production
-platform. Where I made tradeoffs for the demo, I have called those out below
-along with how I would harden the system for production.
-
-## What The App Does
-
-At a high level, 501 Hub lets a user sign up, sign in, manage their profile,
-start a game session, add players to that session, update player scores, and
-review active or completed matches. The dashboard keeps the current session in
-focus while still giving quick access to match history and session media.
-
-The main user flow is:
-
-- Sign up or sign in with Supabase email/password auth.
-- Land on the dashboard after authentication.
-- Update profile details and upload a profile image.
-- Start a new session with selected players and optional video.
-- Select matches from `My Matches` or `Latest Matches`.
-- Update scores for active sessions.
-- End active sessions and review completed sessions.
-
-## How To Run It Locally
+## Development Access
 
 Install dependencies:
 
@@ -47,10 +26,10 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-Apply the Supabase migrations in `supabase/migrations` to your Supabase project.
-Those migrations create the player/session schema, auth profile trigger, score
-RPC functions, media metadata fields, and Realtime publication setup for
-`session_players`.
+Apply the Supabase migrations in `supabase/migrations` to the target Supabase
+project. The migrations create player/session tables, score RPC functions,
+auth-user profile creation, media metadata columns, and Realtime publication
+setup for `session_players`.
 
 Start the app:
 
@@ -58,9 +37,9 @@ Start the app:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Create an account, confirm
-the email if your Supabase project requires confirmation, then sign in. A
-successful login redirects to `/dashboard`.
+Open [http://localhost:3000](http://localhost:3000). Sign up with an email and
+password, confirm the email if your Supabase project requires confirmation, then
+sign in. Successful auth redirects to `/dashboard`.
 
 ## Environment Variables
 
@@ -77,36 +56,34 @@ successful login redirects to `/dashboard`.
 - `CLOUDINARY_API_SECRET`: server-only Cloudinary secret used to generate upload
   signatures.
 
-## Core Features
+## App Features
 
 ### Authentication
 
 The root page (`/`) provides sign-in and registration flows using Supabase
-email/password auth. Registration passes the display name through Supabase auth
+email/password auth. Registration stores the display name in Supabase auth
 metadata, and a database trigger creates the matching `players` profile row.
 Forgot-password and reset-password pages handle Supabase password recovery.
 
-### Dashboard
+### Dashboard Layout
 
-The dashboard has a top navigation bar, match history, and the selected session
-area. The top nav shows the current player's avatar, display name, derived high
-score, derived lifetime score, and logout action. On desktop, match history
-lives in a left sidebar. On mobile, it opens in a left-side drawer so the
-session dashboard stays in focus.
+The dashboard shows a top navigation bar, match-history panel, and main session
+area. The top nav includes the current player's avatar, display name, derived
+high score, derived lifetime score, and logout action.
 
 ### Profile Management
 
 Clicking the avatar opens a profile drawer. A user can update their display name
-and upload a profile image. The image is previewed locally before upload, then
-uploaded directly to Cloudinary with signed upload parameters from the server.
-Only the returned URL and Cloudinary public ID are stored in Supabase.
+and upload a new profile image. Image uploads use signed Cloudinary direct
+uploads, preview locally before saving, then persist the returned URL and public
+ID on the player's profile.
 
 ### Match History
 
-The match history view has `My Matches` and `Latest Matches` tabs. `My Matches`
-lists sessions where the logged-in player appears in `session_players`, while
-`Latest Matches` lists recent sessions across the platform. Each item shows the
-title, ID, status, started date, and player count.
+The sidebar has `My Matches` and `Latest Matches` tabs. `My Matches` lists
+sessions where the current player appears in `session_players`; `Latest Matches`
+lists recent sessions across the platform. Each item shows title, ID, status,
+started date, and player count.
 
 ### Session Overview
 
@@ -119,25 +96,22 @@ from the detail view.
 
 When no session is selected, `Start Session` opens a create-session flow. The
 current player is preselected, other players can be added, and a video can be
-provided either as a pasted URL or as an uploaded Cloudinary video.
+provided either as a URL or uploaded to Cloudinary.
 
 ### Score Updates And Realtime
 
-Active session player cards show `+1` and `-1` controls. Score updates call a
-PATCH endpoint that delegates the write to a Postgres RPC function. That keeps
-the update atomic and prevents negative scores at the database layer.
-
-On the frontend, the score display is isolated through a small shared score
-store. That means updating one player's score does not require rerendering the
-entire player-card list. Supabase Realtime is scoped to the selected session, so
-connected clients receive score changes without a full refresh or broad
-subscriptions.
+Active session player cards show `+1` and `-1` controls. Score updates call the
+score PATCH endpoint, which delegates the update to a Postgres RPC function that
+prevents negative scores. The UI keeps scores isolated in a small score store,
+and Supabase Realtime updates the matching score display when
+`session_players.score` changes. Completed sessions disable score controls and
+highlight the highest-scoring player cards.
 
 ### Media Handling
 
 Profile images and uploaded session videos use Cloudinary signed direct uploads.
 The browser asks `/api/cloudinary/sign-upload` for signed parameters, uploads
-directly to Cloudinary, then stores the returned `secure_url` and `public_id` in
+directly to Cloudinary, then saves the returned `secure_url` and `public_id` in
 Supabase.
 
 Stored media fields:
@@ -153,13 +127,9 @@ Provided video URLs are stored and rendered unchanged.
 
 ### Responsive And State Handling
 
-The layout is responsive across desktop and mobile. Desktop uses the familiar
-sidebar plus main dashboard split. Mobile replaces the sidebar with a left-side
-match-history drawer so the session content is not pushed down the page.
-
-The app also includes loading, empty, unavailable, score-error, and no-video
-states. Those states are small, but they matter because they make the app feel
-complete while network and auth operations are in progress.
+The layout is responsive: desktop uses a left sidebar and main session area,
+while smaller screens stack match history above the session content. The app
+includes loading, empty, unavailable, score-error, and no-video states.
 
 ## API Reference
 

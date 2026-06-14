@@ -1,12 +1,23 @@
 import { errorResponse, readJsonObject } from "@/lib/api/http";
 import { getSupabaseAdmin } from "@/lib/db/supabase";
+import type { Database } from "@/lib/db/types";
 
 export const dynamic = "force-dynamic";
+
+type ScoreUpdateRow =
+  Database["public"]["Functions"]["update_session_player_score"]["Returns"][number];
 
 type SessionPlayerRouteContext = {
   params: Promise<{ id: string; playerId: string }>;
 };
 
+/**
+ * PATCH /api/sessions/[id]/players/[playerId]
+ * - Reads session and player IDs from route params.
+ * - Validates the score delta payload.
+ * - Calls the score-update RPC for an atomic non-negative update.
+ * - Maps RPC result codes to API responses and returns the confirmed score.
+ */
 export async function PATCH(
   request: Request,
   context: SessionPlayerRouteContext,
@@ -34,7 +45,7 @@ export async function PATCH(
     return errorResponse("Failed to update player score.", 500);
   }
 
-  const result = data[0];
+  const result: ScoreUpdateRow | undefined = data[0];
 
   if (!result) {
     return errorResponse("Failed to update player score.", 500);

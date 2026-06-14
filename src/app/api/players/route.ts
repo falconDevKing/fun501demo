@@ -3,6 +3,12 @@ import { getSupabaseAdmin } from "@/lib/db/supabase";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * GET /api/players
+ * - Fetches all player profiles needed by the create-session picker.
+ * - Sorts players by display name for predictable selection.
+ * - Returns normalized player IDs, names, and profile image fields.
+ */
 export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data: players, error } = await supabase

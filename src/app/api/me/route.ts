@@ -1,8 +1,24 @@
 import { errorResponse, readJsonObject } from "@/lib/api/http";
 import { getSupabaseAdmin } from "@/lib/db/supabase";
+import type { Database } from "@/lib/db/types";
 
 export const dynamic = "force-dynamic";
 
+type PlayerScoreSummaryRow =
+  Database["public"]["Functions"]["get_player_score_summary"]["Returns"][number];
+
+const EMPTY_SCORE_SUMMARY: PlayerScoreSummaryRow = {
+  high_score: 0,
+  lifetime_score: 0,
+};
+
+/**
+ * GET /api/me
+ * - Verifies the bearer token with Supabase Auth.
+ * - Fetches the matching player profile from the players table.
+ * - Fetches derived high/lifetime scores through the score summary RPC.
+ * - Returns the parsed current-player response used by the dashboard.
+ */
 export async function GET(request: Request) {
   const token = readBearerToken(request);
 
@@ -39,18 +55,9 @@ export async function GET(request: Request) {
     },
   );
 
-  const scores: {
-    high_score: number;
-    lifetime_score: number;
-  } = scoreSummaryError
-    ? {
-        high_score: 0,
-        lifetime_score: 0,
-      }
-    : (scoreSummary[0] ?? {
-        high_score: 0,
-        lifetime_score: 0,
-      });
+  const scores: PlayerScoreSummaryRow = scoreSummaryError
+    ? EMPTY_SCORE_SUMMARY
+    : (scoreSummary[0] ?? EMPTY_SCORE_SUMMARY);
 
   return Response.json({
     player: {
@@ -64,6 +71,13 @@ export async function GET(request: Request) {
   });
 }
 
+/**
+ * PATCH /api/me
+ * - Verifies the request body contains supported profile fields.
+ * - Verifies the bearer token with Supabase Auth.
+ * - Updates only the authenticated user's player profile row.
+ * - Returns the parsed updated profile response.
+ */
 export async function PATCH(request: Request) {
   const token = readBearerToken(request);
 

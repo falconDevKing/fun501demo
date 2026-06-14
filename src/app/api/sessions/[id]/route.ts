@@ -17,6 +17,13 @@ type PlayerJoinRow = {
   score: number;
 };
 
+/**
+ * GET /api/sessions/[id]
+ * - Reads the session ID from route params.
+ * - Fetches session details and stored media metadata.
+ * - Fetches joined session player rows with profile data and scores.
+ * - Returns the parsed session detail used by the dashboard.
+ */
 export async function GET(_request: Request, context: SessionRouteContext) {
   const { id } = await context.params;
   const supabase = getSupabaseAdmin();
@@ -72,6 +79,13 @@ export async function GET(_request: Request, context: SessionRouteContext) {
   });
 }
 
+/**
+ * PATCH /api/sessions/[id]
+ * - Reads the session ID and validates supported update fields.
+ * - Builds a partial session update for title, status, or video metadata.
+ * - Preserves an existing completion timestamp when ending a session.
+ * - Returns the updated session summary.
+ */
 export async function PATCH(request: Request, context: SessionRouteContext) {
   const { id } = await context.params;
   const body = await readJsonObject(request);

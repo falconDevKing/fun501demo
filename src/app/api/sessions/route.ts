@@ -5,6 +5,13 @@ import type { SessionStatus } from "@/lib/db/types";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * GET /api/sessions
+ * - Optionally scopes sessions to a playerId query parameter.
+ * - Fetches matching sessions ordered by newest started/created time.
+ * - Counts players for each returned session.
+ * - Returns match-history summary rows for dashboard tabs.
+ */
 export async function GET(request: Request) {
   const supabase = getSupabaseAdmin();
   const playerId = new URL(request.url).searchParams.get("playerId");
@@ -77,6 +84,13 @@ export async function GET(request: Request) {
   });
 }
 
+/**
+ * POST /api/sessions
+ * - Reads and validates session details, players, and video metadata.
+ * - Verifies every provided player ID exists.
+ * - Creates the session row and joins selected players with score 0.
+ * - Returns the created session summary for immediate dashboard selection.
+ */
 export async function POST(request: Request) {
   const body = await readJsonObject(request);
 
