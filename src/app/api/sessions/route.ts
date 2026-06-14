@@ -55,6 +55,7 @@ export async function GET(request: Request) {
   const sessionIds = sessions.map((session) => session.id);
   const playerCounts = new Map<string, number>();
 
+  // ideakky should make this an sql query with a group by but supabase doesn't support that yet
   if (sessionIds.length > 0) {
     const { data: sessionPlayers, error: countError } = await supabase
       .from("session_players")

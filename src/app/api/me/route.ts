@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 type PlayerScoreSummaryRow =
   Database["public"]["Functions"]["get_player_score_summary"]["Returns"][number];
 
+type PlayerUpdateData = Database["public"]["Tables"]["players"]["Update"];
+
 const EMPTY_SCORE_SUMMARY: PlayerScoreSummaryRow = {
   high_score: 0,
   lifetime_score: 0,
@@ -112,13 +114,21 @@ export async function PATCH(request: Request) {
     return errorResponse("Invalid or expired session.", 401);
   }
 
+  const updateData: PlayerUpdateData = {
+    display_name: displayName,
+    photo_public_id: photoPublicId,
+    photo_url: photoUrl,
+  };
+
+  for (const key in updateData) {
+    if (!updateData[key as keyof PlayerUpdateData]) {
+      delete updateData[key as keyof PlayerUpdateData];
+    }
+  }
+
   const { data: player, error: playerError } = await supabase
     .from("players")
-    .update({
-      display_name: displayName,
-      photo_public_id: photoPublicId,
-      photo_url: photoUrl,
-    })
+    .update(updateData)
     .eq("auth_user_id", authData.user.id)
     .select("id,display_name,photo_url,photo_public_id")
     .maybeSingle();

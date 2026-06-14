@@ -72,6 +72,7 @@ The main risks are:
 
 - Users modifying sessions they do not own or belong to.
 - Users updating scores for sessions they should not control.
+- Permissive use of admin client for db updates.
 - Abuse of open API endpoints.
 - Unsafe or oversized media uploads.
 - Overly broad CORS or client-side trust.
